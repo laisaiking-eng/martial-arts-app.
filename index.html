@@ -1,475 +1,167 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>武術養生班 收/支報表</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
-  
+  <title>武術會記帳系統</title>
   <style>
-    :root {
-      --primary-color: #1e40af;
-      --primary-hover: #1d4ed8;
-      --bg-color: #f0f6ff;
-      --card-bg: #ffffff;
-      --border-color: #bfdbfe;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-color);
-      margin: 0;
-      padding: 12px;
-      color: #1e293b;
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .header h1 {
-      color: var(--primary-color);
-      font-size: 1.3rem;
-      margin: 0;
-      text-align: center;
-    }
-
-    .balance-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 12px;
-      text-align: center;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 4px rgba(30, 64, 175, 0.05);
-    }
-    .balance-title {
-      font-size: 0.9rem;
-      color: #64748b;
-      display: block;
-      margin-bottom: 4px;
-    }
-    .balance-amount {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--primary-color);
-      display: block;
-    }
-
-    .form-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-    .form-group {
-      margin-bottom: 12px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: bold;
-      margin-bottom: 6px;
-      color: var(--primary-color);
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-      box-sizing: border-box;
-      font-size: 0.95rem;
-      font-family: inherit;
-    }
-
-    .member-checkbox-container {
-      max-height: 150px;
-      overflow-y: auto;
-      border: 1px solid #cbd5e1;
-      padding: 8px;
-      border-radius: 4px;
-      background: #fafafa;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .member-item {
-      display: flex;
-      align-items: center;
-      background: #e0f2fe;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.85rem;
-    }
-    .member-item input {
-      width: auto;
-      margin-right: 4px;
-    }
-
-    .manage-members-btn {
-      background: none;
-      border: none;
-      color: var(--primary-color);
-      text-decoration: underline;
-      cursor: pointer;
-      font-size: 0.8rem;
-      padding: 0;
-      margin-top: 4px;
-    }
-
-    .btn-submit {
-      width: 100%;
-      background: var(--primary-color);
-      color: white;
-      border: none;
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 8px;
-    }
-
-    .table-container {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 550px;
-    }
-    th, td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid #f1f5f9;
-      font-size: 0.85rem;
-      vertical-align: top;
-    }
-    th {
-      background: #dbeafe;
-      color: var(--primary-color);
-      white-space: nowrap;
-    }
-    /* 讓學員姓名及附註欄位彈性多行 */
-    .col-details {
-      white-space: normal;
-      min-width: 180px;
-      max-width: 250px;
-      word-break: break-all;
-    }
-
-    .income { color: #16a34a; font-weight: bold; }
-    .expense { color: #dc2626; font-weight: bold; }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    .member-manage-list {
-      list-style: none;
-      padding: 0;
-      margin: 10px 0;
-    }
-    .member-manage-list li {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 0;
-      border-bottom: 1px solid #eee;
-    }
-    .btn-del {
-      background: #ef4444;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; padding: 0; background-color: #f4f7f6; }
+    h1 { color: #333; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input, select, button { padding: 10px; width: 100%; max-width: 400px; box-sizing: border-box; margin-bottom: 10px; }
+    button { background-color: #28a745; color: white; border: none; cursor: pointer; font-size: 16px; }
+    button:hover { background-color: #218838; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background-color: #007bff; color: white; }
+    .delete-btn { background-color: #dc3545; width: auto; padding: 5px 10px; margin: 0; font-size: 14px; }
+    .delete-btn:hover { background-color: #c82333; }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <span>🥋</span>
-    <h1>深井武術養生班<br>收/支報表</h1>
-    <span>🥊</span>
+  <h1>🥋 武術會記帳系統</h1>
+
+  <div class="form-group">
+    <label for="date">日期：</label>
+    <input type="date" id="date">
+
+    <label for="category">類別：</label>
+    <select id="category">
+      <option value="收入">收入</option>
+      <option value="支出">支出</option>
+    </select>
+
+    <label for="description">項目說明：</label>
+    <input type="text" id="description" placeholder="例如：學費、器材費">
+
+    <label for="amount">金額：</label>
+    <input type="number" id="amount" placeholder="金額">
+
+    <button id="add-btn">新增帳目紀錄</button>
   </div>
 
-  <div class="balance-card">
-    <span class="balance-title">餘額</span>
-    <span class="balance-amount" id="currentBalance">HK$ 3,866.70</span>
-  </div>
+  <h2>帳目明細</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>類別</th>
+        <th>說明</th>
+        <th>金額</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="records-body">
+      <!-- 資料會自動載入到這裡 -->
+    </tbody>
+  </table>
 
-  <div class="form-card">
-    <form id="accountForm">
-      <div class="form-group">
-        <label>收/支</label>
-        <select id="type" required>
-          <option value="收入">收入</option>
-          <option value="支出">支出</option>
-        </select>
-      </div>
+  <!-- 引入 Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-      <div class="form-group">
-        <label>摘要</label>
-        <select id="summary" onchange="toggleNoteField()">
-          <option value="考試費">考試費</option>
-          <option value="橫額">橫額</option>
-          <option value="贊助">贊助</option>
-          <option value="其他">其他</option>
-        </select>
-      </div>
-
-      <div class="form-group" id="noteGroup" style="display: none;">
-        <label>附註資料</label>
-        <textarea id="note" rows="3" placeholder="請填寫附註資料（可輸入多行）..."></textarea>
-      </div>
-
-      <div class="form-group">
-        <label>學員姓名</label>
-        <div class="member-checkbox-container" id="memberCheckboxArea"></div>
-        <button type="button" class="manage-members-btn" onclick="checkAuthAndRun(openMemberModal)">⚙️ 管理 / 新增學員名單</button>
-      </div>
-
-      <div class="form-group">
-        <label>金額 (HK$)</label>
-        <input type="number" id="amount" placeholder="0.00" step="0.1" required>
-      </div>
-
-      <button type="submit" class="btn-submit">新增帳目紀錄</button>
-    </form>
-  </div>
-
-  <h2 style="font-size: 1.1rem; color: var(--primary-color);">帳目明細</h2>
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>日期</th>
-          <th>收/支</th>
-          <th>摘要</th>
-          <th>學員姓名及附註</th>
-          <th>金額</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="recordTable"></tbody>
-    </table>
-  </div>
-
-  <!-- 學員管理彈窗 -->
-  <div class="modal" id="memberModal">
-    <div class="modal-content">
-      <h3>學員名單管理</h3>
-      <div style="display: flex; gap: 4px; margin-bottom: 10px;">
-        <input type="text" id="newMemberName" placeholder="輸入新學員姓名">
-        <button type="button" onclick="addMember()" style="width: 80px; background: var(--primary-color); color: white; border: none; border-radius: 4px;">增加</button>
-      </div>
-      <ul class="member-manage-list" id="memberManageList"></ul>
-      <button type="button" onclick="closeMemberModal()" class="btn-submit">關閉</button>
-    </div>
-  </div>
-
-  <script>
-    const CORRECT_PASSWORD = "class";
-    let isUnlocked = false; // 紀錄此 session 是否已解鎖
-
-    let memberList = [
-      "李鳳儀", "梁美玲", "蔡惠珠", "黃愛晴", "馮志民", "李文英", "鍾炳權", 
-      "鄭炳權", "關凱惠", "蘇少賢", "鍾麗君", "伍佩賢", "方兆賢", "張家莉", 
-      "周響輝", "林雪蓮", "譚美霞", "李翠玲", "陸焯然", "何肇東", "陳麗君", 
-      "楊燕娜", "區美珍", "蘇麗珠", "歐志雄", "盧明俐", "陸景城", "黎世瓊", "吳彩英"
-    ];
-
-    let records = [];
-    let balance = 3866.70;
-
-    window.onload = function() {
-      renderMemberCheckboxes();
-      updateUI();
-      toggleNoteField();
+    // 專屬 Firebase 設定檔
+    const firebaseConfig = {
+      apiKey: "AIzaSyBpge6e4Gk8ab5590Y0EIW6loGA8hVwdBM",
+      authDomain: "kungfu-account.firebaseapp.com",
+      projectId: "kungfu-account",
+      storageBucket: "kungfu-account.firebasestorage.app",
+      messagingSenderId: "381501844767",
+      appId: "1:381501844767:web:fbb510db7fd2ca1cd3542a",
+      measurementId: "G-SZCCJ3N3MD"
     };
 
-    // 密碼驗證核心函式
-    function checkAuthAndRun(callback) {
-      if (isUnlocked) {
-        callback();
-      } else {
-        const inputPwd = prompt("請輸入密碼解鎖權限（輸入及刪除資料）：");
-        if (inputPwd === CORRECT_PASSWORD) {
-          isUnlocked = true;
-          alert("解鎖成功！本次連線期間無需再次輸入密碼。");
-          callback();
-        } else if (inputPwd !== null) {
-          alert("密碼錯誤，無法進行操作。");
-        }
-      }
-    }
+    // 初始化 Firebase 與 Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const recordsRef = collection(db, "records");
 
-    function toggleNoteField() {
-      const summary = document.getElementById('summary').value;
-      const noteGroup = document.getElementById('noteGroup');
-      if (summary === '贊助' || summary === '其他') {
-        noteGroup.style.display = 'block';
-      } else {
-        noteGroup.style.display = 'none';
-      }
-    }
+    // 預設密碼
+    const SECRET_PASSWORD = "class";
 
-    function renderMemberCheckboxes() {
-      const area = document.getElementById('memberCheckboxArea');
-      area.innerHTML = '';
-      memberList.forEach(name => {
-        const div = document.createElement('div');
-        div.className = 'member-item';
-        div.innerHTML = `<label><input type="checkbox" value="${name}"> ${name}</label>`;
-        area.appendChild(div);
-      });
-    }
+    // 預設日期為今天
+    document.getElementById('date').valueAsDate = new Date();
 
-    // 新增紀錄（需密碼）
-    document.getElementById('accountForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      checkAuthAndRun(submitFormProcess);
-    });
-
-    function submitFormProcess() {
-      const type = document.getElementById('type').value;
-      const summary = document.getElementById('summary').value;
-      const amount = parseFloat(document.getElementById('amount').value);
-      const note = document.getElementById('note').value.trim();
-
-      const now = new Date();
-      const day = String(now.getDate()).padStart(2, '0');
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const yearShort = String(now.getFullYear()).slice(-2);
-      const dateStr = `${day}/${month}/${yearShort}`;
-
-      const checkedBoxes = document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]:checked');
-      const selectedMembers = Array.from(checkedBoxes).map(cb => cb.value).join('、');
-
-      if (type === '收入') {
-        balance += amount;
-      } else {
-        balance -= amount;
-      }
-
-      records.unshift({ 
-        id: Date.now(),
-        date: dateStr, 
-        type, 
-        summary, 
-        memberNames: selectedMembers, 
-        note, 
-        amount 
-      });
-      
-      updateUI();
-      
-      document.getElementById('amount').value = '';
-      document.getElementById('note').value = '';
-      document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]').forEach(cb => cb.checked = false);
-    }
-
-    // 刪除帳目紀錄（需密碼）
-    function deleteRecord(id) {
-      checkAuthAndRun(() => {
-        const index = records.findIndex(r => r.id === id);
-        if (index !== -1) {
-          const item = records[index];
-          // 退回金額
-          if (item.type === '收入') {
-            balance -= item.amount;
-          } else {
-            balance += item.amount;
-          }
-          records.splice(index, 1);
-          updateUI();
-        }
-      });
-    }
-
-    function updateUI() {
-      document.getElementById('currentBalance').textContent = `HK$ ${balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-
-      const tbody = document.getElementById('recordTable');
+    // 載入資料庫帳目
+    async function loadRecords() {
+      const tbody = document.getElementById('records-body');
       tbody.innerHTML = '';
       
-      records.forEach(r => {
-        let details = [];
-        if (r.memberNames) details.push(`<b>學員：</b>${r.memberNames}`);
-        if (r.note) details.push(`<b>附註：</b><br>${r.note.replace(/\n/g, '<br>')}`);
-        const combinedText = details.length > 0 ? details.join('<br>') : '-';
+      try {
+        const q = query(recordsRef, orderBy("date", "desc"));
+        const querySnapshot = await getDocs(q);
+        
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${data.date}</td>
+            <td>${data.category}</td>
+            <td>${data.description}</td>
+            <td>$${data.amount}</td>
+            <td><button class="delete-btn" data-id="${docSnap.id}">刪除</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${r.date}</td>
-          <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type}</td>
-          <td>${r.summary}</td>
-          <td class="col-details">${combinedText}</td>
-          <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type === '收入' ? '+' : '-'}$${r.amount.toFixed(2)}</td>
-          <td><button class="btn-del" onclick="deleteRecord(${r.id})">刪除</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function openMemberModal() {
-      document.getElementById('memberModal').style.display = 'flex';
-      renderMemberManageList();
-    }
-
-    function closeMemberModal() {
-      document.getElementById('memberModal').style.display = 'none';
-      renderMemberCheckboxes();
-    }
-
-    function renderMemberManageList() {
-      const list = document.getElementById('memberManageList');
-      list.innerHTML = '';
-      memberList.forEach((name, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span>${name}</span> <button class="btn-del" onclick="deleteMember(${index})">刪除</button>`;
-        list.appendChild(li);
-      });
-    }
-
-    function addMember() {
-      const input = document.getElementById('newMemberName');
-      const name = input.value.trim();
-      if (name) {
-        memberList.push(name);
-        input.value = '';
-        renderMemberManageList();
+        // 綁定刪除事件
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const password = prompt("請輸入密碼以刪除帳目：");
+            if (password === SECRET_PASSWORD) {
+              const id = e.target.getAttribute('data-id');
+              await deleteDoc(doc(db, "records", id));
+              loadRecords();
+            } else if (password !== null) {
+              alert("密碼錯誤！");
+            }
+          });
+        });
+      } catch (error) {
+        console.error("載入失敗：", error);
       }
     }
 
-    function deleteMember(index) {
-      memberList.splice(index, 1);
-      renderMemberManageList();
-    }
+    // 新增帳目功能
+    document.getElementById('add-btn').addEventListener('click', async () => {
+      const date = document.getElementById('date').value;
+      const category = document.getElementById('category').value;
+      const description = document.getElementById('description').value;
+      const amount = Number(document.getElementById('amount').value);
+
+      if (!description || !amount) {
+        alert("請填寫完整的項目說明與金額！");
+        return;
+      }
+
+      const password = prompt("請輸入密碼以新增帳目：");
+      if (password === SECRET_PASSWORD) {
+        try {
+          await addDoc(recordsRef, {
+            date,
+            category,
+            description,
+            amount,
+            createdAt: new Date()
+          });
+          document.getElementById('description').value = '';
+          document.getElementById('amount').value = '';
+          alert("儲存成功！");
+          loadRecords();
+        } catch (error) {
+          alert("儲存失敗，請檢查網路或資料庫設定！");
+          console.error(error);
+        }
+      } else if (password !== null) {
+        alert("密碼錯誤！");
+      }
+    });
+
+    // 網頁載入時自動讀取資料
+    loadRecords();
   </script>
 </body>
 </html>
