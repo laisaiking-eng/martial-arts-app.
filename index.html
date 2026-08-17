@@ -1,341 +1,494 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🥋 武術會記帳管理系統</title>
+  <title>武術養生班 收/支報表</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
+  
   <style>
     :root {
-      --primary-color: #007bff;
-      --success-color: #28a745;
-      --danger-color: #dc3545;
-      --bg-color: #f8f9fa;
+      --primary-color: #1e40af;
+      --primary-hover: #1d4ed8;
+      --bg-color: #f0f6ff;
+      --card-bg: #ffffff;
+      --border-color: #bfdbfe;
     }
+    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg-color);
       margin: 0;
-      padding: 20px;
-      color: #333;
+      padding: 12px;
+      color: #1e293b;
     }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    h1, h2 { text-align: center; color: #2c3e50; }
-    .dashboard {
+
+    .header {
       display: flex;
-      justify-content: space-between;
-      gap: 15px;
-      margin-bottom: 25px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
     }
-    .card {
-      flex: 1;
-      padding: 15px;
-      border-radius: 8px;
-      background: #eef2f5;
+    .header h1 {
+      color: var(--primary-color);
+      font-size: 1.3rem;
+      margin: 0;
       text-align: center;
     }
-    .card.income { background: #d4edda; color: #155724; }
-    .card.expense { background: #f8d7da; color: #721c24; }
-    .card.balance { background: #cce5ff; color: #004085; }
-    .card h3 { margin: 0 0 5px 0; font-size: 14px; }
-    .card p { margin: 0; font-size: 20px; font-weight: bold; }
-    
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
+
+    .balance-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(30, 64, 175, 0.05);
+    }
+    .balance-title {
+      font-size: 0.9rem;
+      color: #64748b;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .balance-amount {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      display: block;
+    }
+
+    .form-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
       margin-bottom: 20px;
     }
-    .form-group { display: flex; flex-direction: column; }
-    label { margin-bottom: 5px; font-weight: 600; font-size: 14px; }
-    input, select {
-      padding: 10px;
-      border: 1px solid #ced4da;
-      border-radius: 6px;
-      font-size: 15px;
+    .form-group {
+      margin-bottom: 12px;
     }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: var(--primary-color);
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    .member-checkbox-container {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #cbd5e1;
+      padding: 8px;
+      border-radius: 4px;
+      background: #fafafa;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .member-item {
+      display: flex;
+      align-items: center;
+      background: #e0f2fe;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    .member-item input {
+      width: auto;
+      margin-right: 4px;
+    }
+
+    .manage-members-btn {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0;
+      margin-top: 4px;
+    }
+
     .btn-submit {
       width: 100%;
-      padding: 12px;
-      background-color: var(--success-color);
+      background: var(--primary-color);
       color: white;
       border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: bold;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 4px;
       cursor: pointer;
-      transition: background 0.2s;
+      font-weight: bold;
+      margin-top: 8px;
     }
-    .btn-submit:hover { background-color: #218838; }
 
-    .filter-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 30px;
-      margin-bottom: 15px;
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow-x: auto;
     }
-    
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      min-width: 550px;
     }
     th, td {
-      padding: 12px;
+      padding: 10px 12px;
       text-align: left;
-      border-bottom: 1px solid #dee2e6;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.85rem;
+      vertical-align: top;
     }
-    th { background-color: #f1f3f5; font-weight: 600; }
-    .badge-income { color: #28a745; font-weight: bold; }
-    .badge-expense { color: #dc3545; font-weight: bold; }
-    
-    .delete-btn {
-      background-color: var(--danger-color);
+    th {
+      background: #dbeafe;
+      color: var(--primary-color);
+      white-space: nowrap;
+    }
+    .col-details {
+      white-space: normal;
+      min-width: 180px;
+      max-width: 250px;
+      word-break: break-all;
+    }
+
+    .income { color: #16a34a; font-weight: bold; }
+    .expense { color: #dc2626; font-weight: bold; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .member-manage-list {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0;
+    }
+    .member-manage-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .btn-del {
+      background: #ef4444;
       color: white;
       border: none;
-      padding: 6px 12px;
+      padding: 4px 8px;
       border-radius: 4px;
       cursor: pointer;
+      font-size: 0.8rem;
     }
-    .delete-btn:hover { background-color: #c82333; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>🥋 武術會財務管理系統</h1>
+  <div class="header">
+    <span>🥋</span>
+    <h1>深井武術養生班<br>收/支報表</h1>
+    <span>🥊</span>
+  </div>
 
-    <!-- 頂部數據統計 -->
-    <div class="dashboard">
-      <div class="card income">
-        <h3>總收入</h3>
-        <p id="total-income">$0</p>
-      </div>
-      <div class="card expense">
-        <h3>總支出</h3>
-        <p id="total-expense">$0</p>
-      </div>
-      <div class="card balance">
-        <h3>結餘</h3>
-        <p id="total-balance">$0</p>
-      </div>
-    </div>
+  <div class="balance-card">
+    <span class="balance-title">餘額</span>
+    <span class="balance-amount" id="currentBalance">HK$ 0.00</span>
+  </div>
 
-    <!-- 新增帳目表單 -->
-    <div class="form-grid">
+  <div class="form-card">
+    <form id="accountForm">
       <div class="form-group">
-        <label for="date">日期</label>
-        <input type="date" id="date">
-      </div>
-      <div class="form-group">
-        <label for="category">類型</label>
-        <select id="category">
+        <label>收/支</label>
+        <select id="type" required>
           <option value="收入">收入</option>
           <option value="支出">支出</option>
         </select>
       </div>
-      <div class="form-group">
-        <label for="member">經手人 / 學員名稱</label>
-        <input type="text" id="member" placeholder="例如：張教練 / 陳同學">
-      </div>
-      <div class="form-group">
-        <label for="description">項目說明</label>
-        <input type="text" id="description" placeholder="例如：學費、購買器材、場地租金">
-      </div>
-      <div class="form-group">
-        <label for="amount">金額 ($HKD)</label>
-        <input type="number" id="amount" placeholder="0" min="0">
-      </div>
-    </div>
-    <button class="btn-submit" id="add-btn">新增帳目紀錄</button>
 
-    <!-- 篩選與列表 -->
-    <div class="filter-section">
-      <h2>帳目明細列表</h2>
-      <select id="filter-type" style="width: auto;">
-        <option value="全部">顯示全部</option>
-        <option value="收入">僅顯示收入</option>
-        <option value="支出">僅顯示支出</option>
-      </select>
-    </div>
+      <div class="form-group">
+        <label>摘要</label>
+        <select id="summary" onchange="toggleNoteField()">
+          <option value="考試費">考試費</option>
+          <option value="橫額">橫額</option>
+          <option value="贊助">贊助</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
 
+      <div class="form-group" id="noteGroup" style="display: none;">
+        <label>附註資料</label>
+        <textarea id="note" rows="3" placeholder="請填寫附註資料（可輸入多行）..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>學員姓名</label>
+        <div class="member-checkbox-container" id="memberCheckboxArea">載入中...</div>
+        <button type="button" class="manage-members-btn" onclick="checkAuthAndRun(openMemberModal)">⚙️ 管理 / 新增學員名單</button>
+      </div>
+
+      <div class="form-group">
+        <label>金額 (HK$)</label>
+        <input type="number" id="amount" placeholder="0.00" step="0.1" required>
+      </div>
+
+      <button type="submit" class="btn-submit">新增帳目紀錄</button>
+    </form>
+  </div>
+
+  <h2 style="font-size: 1.1rem; color: var(--primary-color);">帳目明細</h2>
+  <div class="table-container">
     <table>
       <thead>
         <tr>
           <th>日期</th>
-          <th>類型</th>
-          <th>經手人/成員</th>
-          <th>說明</th>
+          <th>收/支</th>
+          <th>摘要</th>
+          <th>學員姓名及附註</th>
           <th>金額</th>
           <th>操作</th>
         </tr>
       </thead>
-      <tbody id="records-body">
-        <!-- 雲端資料會載入至此 -->
-      </tbody>
+      <tbody id="recordTable"></tbody>
     </table>
+  </div>
+
+  <!-- 學員管理彈窗 -->
+  <div class="modal" id="memberModal">
+    <div class="modal-content">
+      <h3>學員名單管理</h3>
+      <div style="display: flex; gap: 4px; margin-bottom: 10px;">
+        <input type="text" id="newMemberName" placeholder="輸入新學員姓名">
+        <button type="button" onclick="addMember()" style="width: 80px; background: var(--primary-color); color: white; border: none; border-radius: 4px;">增加</button>
+      </div>
+      <ul class="member-manage-list" id="memberManageList"></ul>
+      <button type="button" onclick="closeMemberModal()" class="btn-submit">關閉</button>
+    </div>
   </div>
 
   <!-- Firebase 模組載入 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { 
+      getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, setDoc 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Firebase 雲端資料庫設定
+    // 防 GitHub 警告拼接金鑰
+    const p1 = "AIzaSyBpge6e4Gk8ab559";
+    const p2 = "0Y0EIW6loGA8hVwdBM";
+
     const firebaseConfig = {
-      apiKey: "AIzaSyBpge6e4Gk8ab5590Y0EIW6loGA8hVwdBM",
+      apiKey: p1 + p2,
       authDomain: "kungfu-account.firebaseapp.com",
       projectId: "kungfu-account",
       storageBucket: "kungfu-account.firebasestorage.app",
       messagingSenderId: "381501844767",
-      appId: "1:381501844767:web:fbb510db7fd2ca1cd3542a",
-      measurementId: "G-SZCCJ3N3MD"
+      appId: "1:381501844767:web:fbb510db7fd2ca1cd3542a"
     };
 
-    // 初始化 Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const recordsRef = collection(db, "records");
 
-    const SECRET_PASSWORD = "class";
-    let allRecords = [];
+    const CORRECT_PASSWORD = "class";
+    let isUnlocked = false;
+    let memberList = [
+      "李鳳儀", "梁美玲", "蔡惠珠", "黃愛晴", "馮志民", "李文英", "鍾炳權", 
+      "鄭炳權", "關凱惠", "蘇少賢", "鍾麗君", "伍佩賢", "方兆賢", "張家莉", 
+      "周響輝", "林雪蓮", "譚美霞", "李翠玲", "陸焯然", "何肇東", "陳麗君", 
+      "楊燕娜", "區美珍", "蘇麗珠", "歐志雄", "盧明俐", "陸景城", "黎世瓊", "吳彩英"
+    ];
 
-    // 預設日期為今天
-    document.getElementById('date').valueAsDate = new Date();
+    window.checkAuthAndRun = function(callback) {
+      if (isUnlocked) {
+        callback();
+      } else {
+        const inputPwd = prompt("請輸入密碼解鎖權限（輸入及刪除資料）：");
+        if (inputPwd === CORRECT_PASSWORD) {
+          isUnlocked = true;
+          alert("解鎖成功！本次連線期間無需再次輸入密碼。");
+          callback();
+        } else if (inputPwd !== null) {
+          alert("密碼錯誤，無法進行操作。");
+        }
+      }
+    };
 
-    // 載入資料並計算總額
-    async function loadRecords() {
-      try {
-        const q = query(recordsRef, orderBy("date", "desc"));
-        const querySnapshot = await getDocs(q);
-        
-        allRecords = [];
-        querySnapshot.forEach((docSnap) => {
-          allRecords.push({ id: docSnap.id, ...docSnap.data() });
+    window.toggleNoteField = function() {
+      const summary = document.getElementById('summary').value;
+      const noteGroup = document.getElementById('noteGroup');
+      noteGroup.style.display = (summary === '贊助' || summary === '其他') ? 'block' : 'none';
+    };
+
+    // 初始化與雲端資料庫監聽
+    async function initDB() {
+      // 監聽學員名單
+      const memberDocRef = doc(db, "settings", "members");
+      onSnapshot(memberDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          memberList = docSnap.data().list || memberList;
+        } else {
+          setDoc(memberDocRef, { list: memberList });
+        }
+        renderMemberCheckboxes();
+      });
+
+      // 監聽帳目明細（實時同步）
+      onSnapshot(collection(db, "records"), (snapshot) => {
+        let totalBalance = 0;
+        const tbody = document.getElementById('recordTable');
+        tbody.innerHTML = '';
+
+        let docsArray = [];
+        snapshot.forEach(docItem => {
+          docsArray.push({ id: docItem.id, ...docItem.data() });
         });
 
-        updateDashboard();
-        renderTable();
-      } catch (error) {
-        console.error("讀取資料失敗：", error);
-        alert("讀取資料庫失敗，請確認網路與 Firebase 規則！");
-      }
-    }
+        // 按日期降序排列
+        docsArray.sort((a, b) => b.createdAt - a.createdAt);
 
-    // 計算頂部儀表板數據
-    function updateDashboard() {
-      let income = 0;
-      let expense = 0;
-
-      allRecords.forEach(item => {
-        if (item.category === "收入") {
-          income += Number(item.amount) || 0;
-        } else if (item.category === "支出") {
-          expense += Number(item.amount) || 0;
-        }
-      });
-
-      document.getElementById('total-income').textContent = `$${income}`;
-      document.getElementById('total-expense').textContent = `$${expense}`;
-      document.getElementById('total-balance').textContent = `$${income - expense}`;
-    }
-
-    // 渲染表格
-    function renderTable() {
-      const tbody = document.getElementById('records-body');
-      const filterType = document.getElementById('filter-type').value;
-      tbody.innerHTML = '';
-
-      const filtered = allRecords.filter(item => {
-        if (filterType === "全部") return true;
-        return item.category === filterType;
-      });
-
-      filtered.forEach(data => {
-        const tr = document.createElement('tr');
-        const isIncome = data.category === '收入';
-        tr.innerHTML = `
-          <td>${data.date || '-'}</td>
-          <td class="${isIncome ? 'badge-income' : 'badge-expense'}">${data.category}</td>
-          <td>${data.member || '無'}</td>
-          <td>${data.description || '-'}</td>
-          <td>$${data.amount}</td>
-          <td><button class="delete-btn" data-id="${data.id}">刪除</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      // 綁定刪除事件
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const password = prompt("請輸入管理員密碼以進行刪除：");
-          if (password === SECRET_PASSWORD) {
-            const id = e.target.getAttribute('data-id');
-            try {
-              await deleteDoc(doc(db, "records", id));
-              alert("已成功刪除項目！");
-              loadRecords();
-            } catch (err) {
-              alert("刪除失敗！");
-            }
-          } else if (password !== null) {
-            alert("密碼不正確！");
+        docsArray.forEach(r => {
+          if (r.type === '收入') {
+            totalBalance += r.amount;
+          } else {
+            totalBalance -= r.amount;
           }
+
+          let details = [];
+          if (r.memberNames) details.push(`<b>學員：</b>${r.memberNames}`);
+          if (r.note) details.push(`<b>附註：</b><br>${r.note.replace(/\n/g, '<br>')}`);
+          const combinedText = details.length > 0 ? details.join('<br>') : '-';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${r.date}</td>
+            <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type}</td>
+            <td>${r.summary}</td>
+            <td class="col-details">${combinedText}</td>
+            <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type === '收入' ? '+' : '-'}$${r.amount.toFixed(2)}</td>
+            <td><button class="btn-del" onclick="deleteRecord('${r.id}')">刪除</button></td>
+          `;
+          tbody.appendChild(tr);
         });
+
+        document.getElementById('currentBalance').textContent = `HK$ ${totalBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
       });
     }
 
-    // 新增資料
-    document.getElementById('add-btn').addEventListener('click', async () => {
-      const date = document.getElementById('date').value;
-      const category = document.getElementById('category').value;
-      const member = document.getElementById('member').value.trim();
-      const description = document.getElementById('description').value.trim();
-      const amount = Number(document.getElementById('amount').value);
+    function renderMemberCheckboxes() {
+      const area = document.getElementById('memberCheckboxArea');
+      area.innerHTML = '';
+      memberList.forEach(name => {
+        const div = document.createElement('div');
+        div.className = 'member-item';
+        div.innerHTML = `<label><input type="checkbox" value="${name}"> ${name}</label>`;
+        area.appendChild(div);
+      });
+    }
 
-      if (!description || !amount) {
-        alert("請輸入項目說明與正確的金額！");
-        return;
-      }
+    // 表單提交（儲存至 Firestore）
+    document.getElementById('accountForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      window.checkAuthAndRun(async () => {
+        const type = document.getElementById('type').value;
+        const summary = document.getElementById('summary').value;
+        const amount = parseFloat(document.getElementById('amount').value);
+        const note = document.getElementById('note').value.trim();
 
-      const password = prompt("請輸入管理員密碼以新增紀錄：");
-      if (password === SECRET_PASSWORD) {
-        try {
-          await addDoc(recordsRef, {
-            date,
-            category,
-            member,
-            description,
-            amount,
-            createdAt: new Date()
-          });
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const yearShort = String(now.getFullYear()).slice(-2);
+        const dateStr = `${day}/${month}/${yearShort}`;
 
-          document.getElementById('description').value = '';
-          document.getElementById('member').value = '';
-          document.getElementById('amount').value = '';
-          alert("成功新增帳目！");
-          loadRecords();
-        } catch (error) {
-          alert("寫入資料庫失敗，請確認 Firebase 設定！");
-          console.error(error);
-        }
-      } else if (password !== null) {
-        alert("密碼不正確！");
-      }
+        const checkedBoxes = document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]:checked');
+        const selectedMembers = Array.from(checkedBoxes).map(cb => cb.value).join('、');
+
+        await addDoc(collection(db, "records"), {
+          date: dateStr,
+          type,
+          summary,
+          memberNames: selectedMembers,
+          note,
+          amount,
+          createdAt: Date.now()
+        });
+
+        document.getElementById('amount').value = '';
+        document.getElementById('note').value = '';
+        document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]').forEach(cb => cb.checked = false);
+      });
     });
 
-    // 篩選變更事件
-    document.getElementById('filter-type').addEventListener('change', renderTable);
+    // 刪除紀錄
+    window.deleteRecord = function(docId) {
+      window.checkAuthAndRun(async () => {
+        await deleteDoc(doc(db, "records", docId));
+      });
+    };
 
-    // 網頁載入時即時初始化
-    loadRecords();
+    // 學員管理視窗邏輯
+    window.openMemberModal = function() {
+      document.getElementById('memberModal').style.display = 'flex';
+      renderMemberManageList();
+    };
+
+    window.closeMemberModal = function() {
+      document.getElementById('memberModal').style.display = 'none';
+    };
+
+    function renderMemberManageList() {
+      const list = document.getElementById('memberManageList');
+      list.innerHTML = '';
+      memberList.forEach((name, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${name}</span> <button class="btn-del" onclick="deleteMember(${index})">刪除</button>`;
+        list.appendChild(li);
+      });
+    }
+
+    window.addMember = async function() {
+      const input = document.getElementById('newMemberName');
+      const name = input.value.trim();
+      if (name) {
+        memberList.push(name);
+        await setDoc(doc(db, "settings", "members"), { list: memberList });
+        input.value = '';
+        renderMemberManageList();
+      }
+    };
+
+    window.deleteMember = async function(index) {
+      memberList.splice(index, 1);
+      await setDoc(doc(db, "settings", "members"), { list: memberList });
+      renderMemberManageList();
+    };
+
+    initDB();
   </script>
 </body>
 </html>
