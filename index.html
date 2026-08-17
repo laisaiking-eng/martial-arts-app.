@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>玫瑰花語記事簿 RoseMemo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 15px;
+      /* 粉紅玫瑰浪漫背景 */
+      background: linear-gradient(rgba(255, 240, 245, 0.7), rgba(255, 228, 225, 0.7)),
+                  url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80') center/cover fixed;
+      color: #4a3e3d;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(230, 115, 150, 0.25);
+      backdrop-filter: blur(8px);
+    }
+
+    h2 {
+      text-align: center;
+      color: #d65a8a;
+      margin-top: 0;
+      font-size: 1.4rem;
+    }
+
+    .form-group { margin-bottom: 15px; }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #8b4360;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"], input[type="date"], input[type="time"], select {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #f2b6c6;
+      border-radius: 12px;
+      outline: none;
+      background-color: #fffafc;
+      font-size: 1rem;
+    }
+
+    input:focus, select:focus { border-color: #d65a8a; }
+
+    .checkbox-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .checkbox-label {
+      font-weight: normal;
+      background: #ffe3ec;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #f0789d, #d65a8a);
+      color: white;
+      border: none;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(214, 90, 138, 0.3);
+      margin-top: 10px;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      background: #ffffff;
+      color: #d65a8a;
+      border: 1.5px solid #d65a8a;
+      padding: 12px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .memo-list {
+      margin-top: 25px;
+      border-top: 2px dashed #f2b6c6;
+      padding-top: 15px;
+    }
+
+    .memo-item {
+      background: #fff;
+      border-left: 4px solid #d65a8a;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🌹 玫瑰花語記事簿</h2>
+
+  <form id="memoForm">
+    <div class="form-group">
+      <label>📝 記事內容</label>
+      <input type="text" id="content" placeholder="例如：約會、紀念日、重要會議..." required>
+    </div>
+
+    <div class="form-group" style="display: flex; gap: 10px;">
+      <div style="flex: 1;">
+        <label>📅 日期</label>
+        <input type="date" id="date" required>
+      </div>
+      <div style="flex: 1;">
+        <label>⏰ 時間</label>
+        <input type="time" id="time" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>📍 地點</label>
+      <input type="text" id="location" placeholder="輸入地點或餐廳名稱">
+    </div>
+
+    <div class="form-group">
+      <label>🎵 音樂提醒點（可多選）</label>
+      <div class="checkbox-group">
+        <label class="checkbox-label"><input type="checkbox" name="remind" value="1天前"> 1天前</label>
+        <label class="checkbox-label"><input type="checkbox" name="remind" value="12小時前"> 12小時前</label>
+        <label class="checkbox-label"><input type="checkbox" name="remind" value="3小時前"> 3小時前</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>🔁 重複發生週期</label>
+      <select id="repeat">
+        <option value="不重複">單次（不重複）</option>
+        <option value="一個月">一個月</option>
+        <option value="三個月">三個月</option>
+        <option value="一年">一年</option>
+      </select>
+    </div>
+
+    <button type="button" class="btn-primary" onclick="addMemo()">新增記事 🌹</button>
+    <button type="button" class="btn-secondary" onclick="shareApp()">📤 單獨分享給其他人用</button>
+  </form>
+
+  <div class="memo-list">
+    <h3 style="color: #8b4360; font-size: 1.1rem; margin-top: 0;">📅 已儲存的記事</h3>
+    <div id="memoContainer"></div>
+  </div>
+</div>
+
+<script>
+  // 載入與新增記事邏輯
+  function loadMemos() {
+    const memos = JSON.parse(localStorage.getItem('roseMemos') || '[]');
+    const container = document.getElementById('memoContainer');
+    if (memos.length === 0) {
+      container.innerHTML = '<p style="color: #a07080; font-size: 0.9rem; text-align: center;">尚無記事項目</p>';
+      return;
+    }
+    container.innerHTML = memos.map((m, index) => `
+      <div class="memo-item">
+        <div style="font-weight: bold; color: #d65a8a;">${m.content}</div>
+        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
+          📍 地點: ${m.location || '無'}<br>
+          ⏰ 時間: ${m.date} ${m.time}<br>
+          🎵 提醒: ${m.reminds.join(', ') || '無'}<br>
+          🔁 週期: ${m.repeat}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function addMemo() {
+    const content = document.getElementById('content').value;
+    const date = document.getElementById('date').value;
+    const time = document.getElementById('time').value;
+    const location = document.getElementById('location').value;
+    const repeat = document.getElementById('repeat').value;
+    
+    if (!content || !date || !time) {
+      alert('請填寫記事內容、日期與時間！');
+      return;
+    }
+
+    const reminds = Array.from(document.querySelectorAll('input[name="remind"]:checked')).map(cb => cb.value);
+
+    const newMemo = { content, date, time, location, reminds, repeat };
+    const memos = JSON.parse(localStorage.getItem('roseMemos') || '[]');
+    memos.unshift(newMemo);
+    localStorage.setItem('roseMemos', JSON.stringify(memos));
+
+    // 清空表單並重新整理列表
+    document.getElementById('content').value = '';
+    document.getElementById('location').value = '';
+    loadMemos();
+    alert('🌹 記事已成功儲存並設定音樂提醒！');
+  }
+
+  function shareApp() {
+    if (navigator.share) {
+      navigator.share({
+        title: '玫瑰花語記事簿',
+        text: '這是一款漂亮的粉紅玫瑰記事簿 App，推薦給你使用！',
+        url: window.location.href
+      });
+    } else {
+      alert('已複製分享資訊！您可以直接將此 App 打包檔（APK）發送給其他人獨立安裝使用。');
+    }
+  }
+
+  // 初始化預設日期為今天
+  document.getElementById('date').valueAsDate = new Date();
+  loadMemos();
+</script>
+
+</body>
+</html>
