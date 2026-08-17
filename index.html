@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>武術養生班 收入支出報表</title>
+  <title>武術養生班 收/支報表</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
   
   <style>
     :root {
-      --primary-color: #1e40af; /* 主藍色 */
+      --primary-color: #1e40af;
       --primary-hover: #1d4ed8;
       --bg-color: #f0f6ff;
       --card-bg: #ffffff;
@@ -37,6 +37,7 @@
       text-align: center;
     }
 
+    /* 餘額卡片 (手機兩行) */
     .balance-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -76,16 +77,16 @@
       margin-bottom: 6px;
       color: var(--primary-color);
     }
-    input, select {
+    input, select, textarea {
       width: 100%;
       padding: 8px;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
       box-sizing: border-box;
       font-size: 0.95rem;
+      font-family: inherit;
     }
 
-    /* 學員勾選區塊 */
     .member-checkbox-container {
       max-height: 150px;
       overflow-y: auto;
@@ -110,7 +111,6 @@
       margin-right: 4px;
     }
 
-    /* 管理學員區塊 */
     .manage-members-btn {
       background: none;
       border: none;
@@ -134,9 +134,6 @@
       font-weight: bold;
       margin-top: 8px;
     }
-    .btn-submit:hover {
-      background: var(--primary-hover);
-    }
 
     .table-container {
       background: var(--card-bg);
@@ -148,13 +145,14 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 500px;
+      min-width: 600px;
     }
     th, td {
       padding: 10px 12px;
       text-align: left;
       border-bottom: 1px solid #f1f5f9;
       font-size: 0.85rem;
+      vertical-align: top;
     }
     th {
       background: #dbeafe;
@@ -163,7 +161,6 @@
     .income { color: #16a34a; font-weight: bold; }
     .expense { color: #dc2626; font-weight: bold; }
 
-    /* Modal 彈窗 (學員名單管理) */
     .modal {
       display: none;
       position: fixed;
@@ -207,30 +204,28 @@
 
   <div class="header">
     <span>🥋</span>
-    <h1>深井武術養生班<br>收入支出報表</h1>
+    <h1>深井武術養生班<br>收/支報表</h1>
     <span>🥊</span>
   </div>
 
-  <!-- 期初結餘（手機兩行版面） -->
   <div class="balance-card">
-    <span class="balance-title">期初結餘</span>
-    <span class="balance-amount" id="currentBalance">HK$ 4,230.90</span>
+    <span class="balance-title">餘額</span>
+    <span class="balance-amount" id="currentBalance">HK$ 3,866.70</span>
   </div>
 
   <div class="form-card">
     <form id="accountForm">
       <div class="form-group">
-        <label>收入與支出</label>
+        <label>收/支</label>
         <select id="type" required>
           <option value="收入">收入</option>
           <option value="支出">支出</option>
         </select>
       </div>
 
-      <!-- 摘要 (已移除「項目說明」) -->
       <div class="form-group">
         <label>摘要</label>
-        <select id="summary">
+        <select id="summary" onchange="toggleNoteField()">
           <option value="考試費">考試費</option>
           <option value="橫額">橫額</option>
           <option value="贊助">贊助</option>
@@ -238,12 +233,14 @@
         </select>
       </div>
 
-      <!-- 學員姓名勾選區 -->
+      <div class="form-group" id="noteGroup" style="display: none;">
+        <label>附註資料</label>
+        <textarea id="note" rows="3" placeholder="請填寫附註資料（可輸入多行）..."></textarea>
+      </div>
+
       <div class="form-group">
         <label>學員姓名</label>
-        <div class="member-checkbox-container" id="memberCheckboxArea">
-          <!-- 動態載入勾選框 -->
-        </div>
+        <div class="member-checkbox-container" id="memberCheckboxArea"></div>
         <button type="button" class="manage-members-btn" onclick="openMemberModal()">⚙️ 管理 / 新增學員名單</button>
       </div>
 
@@ -262,19 +259,16 @@
       <thead>
         <tr>
           <th>日期</th>
-          <th>收入與支出</th>
+          <th>收/支</th>
           <th>摘要</th>
-          <th>學員姓名</th>
+          <th>學員姓名及附註</th>
           <th>金額</th>
         </tr>
       </thead>
-      <tbody id="recordTable">
-        <!-- 紀錄會顯示在這裡 -->
-      </tbody>
+      <tbody id="recordTable"></tbody>
     </table>
   </div>
 
-  <!-- 學員管理彈窗 -->
   <div class="modal" id="memberModal">
     <div class="modal-content">
       <h3>學員名單管理</h3>
@@ -288,7 +282,6 @@
   </div>
 
   <script>
-    // 預設學員名單 (根據報表剔除英文名，陸生->陸景城，陸太->黎世瓊)
     let memberList = [
       "李鳳儀", "梁美玲", "蔡惠珠", "黃愛晴", "馮志民", "李文英", "鍾炳權", 
       "鄭炳權", "關凱惠", "蘇少賢", "鍾麗君", "伍佩賢", "方兆賢", "張家莉", 
@@ -297,19 +290,28 @@
     ];
 
     let records = [];
-    let balance = 4230.90; // 初始結餘
+    let balance = 3866.70;
 
-    // 初始化載入
     window.onload = function() {
       renderMemberCheckboxes();
       updateUI();
+      toggleNoteField();
     };
 
-    // 渲染勾選區
+    function toggleNoteField() {
+      const summary = document.getElementById('summary').value;
+      const noteGroup = document.getElementById('noteGroup');
+      if (summary === '贊助' || summary === '其他') {
+        noteGroup.style.display = 'block';
+      } else {
+        noteGroup.style.display = 'none';
+      }
+    }
+
     function renderMemberCheckboxes() {
       const area = document.getElementById('memberCheckboxArea');
       area.innerHTML = '';
-      memberList.forEach((name, index) => {
+      memberList.forEach(name => {
         const div = document.createElement('div');
         div.className = 'member-item';
         div.innerHTML = `<label><input type="checkbox" value="${name}"> ${name}</label>`;
@@ -317,16 +319,21 @@
       });
     }
 
-    // 表單提交處理
     document.getElementById('accountForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
       const type = document.getElementById('type').value;
       const summary = document.getElementById('summary').value;
       const amount = parseFloat(document.getElementById('amount').value);
-      const date = new Date().toLocaleDateString();
+      const note = document.getElementById('note').value.trim();
 
-      // 取得所有已勾選的學員
+      // 日期改為 日/月/年 (例如: 17/08/26)
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const yearShort = String(now.getFullYear()).slice(-2);
+      const dateStr = `${day}/${month}/${yearShort}`;
+
       const checkedBoxes = document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]:checked');
       const selectedMembers = Array.from(checkedBoxes).map(cb => cb.value).join('、');
 
@@ -336,12 +343,19 @@
         balance -= amount;
       }
 
-      records.unshift({ date, type, summary, memberNames: selectedMembers || '-', amount });
+      records.unshift({ 
+        date: dateStr, 
+        type, 
+        summary, 
+        memberNames: selectedMembers, 
+        note, 
+        amount 
+      });
       
       updateUI();
       
-      // 重設表單與勾選
       document.getElementById('amount').value = '';
+      document.getElementById('note').value = '';
       document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]').forEach(cb => cb.checked = false);
     });
 
@@ -352,19 +366,23 @@
       tbody.innerHTML = '';
       
       records.forEach(r => {
+        let details = [];
+        if (r.memberNames) details.push(`<b>學員：</b>${r.memberNames}`);
+        if (r.note) details.push(`<b>附註：</b><br>${r.note.replace(/\n/g, '<br>')}`);
+        const combinedText = details.length > 0 ? details.join('<br>') : '-';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${r.date}</td>
           <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type}</td>
           <td>${r.summary}</td>
-          <td>${r.memberNames}</td>
+          <td>${combinedText}</td>
           <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type === '收入' ? '+' : '-'}$${r.amount.toFixed(2)}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    /* 學員彈窗控制與增加/刪除 */
     function openMemberModal() {
       document.getElementById('memberModal').style.display = 'flex';
       renderMemberManageList();
