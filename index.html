@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>武術會帳目管理系統</title>
-  <!-- 頁面與捷徑圖示（功夫/抱拳圖案） -->
+  <title>武術養生班 收入支出報表</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
   
   <style>
     :root {
-      --primary-color: #8b0000;
-      --bg-color: #f9f6f0;
+      --primary-color: #1e40af; /* 主藍色 */
+      --primary-hover: #1d4ed8;
+      --bg-color: #f0f6ff;
       --card-bg: #ffffff;
-      --border-color: #e0d7c6;
+      --border-color: #bfdbfe;
     }
     
     body {
@@ -20,10 +20,9 @@
       background-color: var(--bg-color);
       margin: 0;
       padding: 12px;
-      color: #333;
+      color: #1e293b;
     }
 
-    /* 頂部標題與功夫圖像 */
     .header {
       display: flex;
       align-items: center;
@@ -33,14 +32,11 @@
     }
     .header h1 {
       color: var(--primary-color);
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       margin: 0;
-    }
-    .kungfu-icon {
-      font-size: 1.8rem;
+      text-align: center;
     }
 
-    /* 期初結餘版面：手機優化分成兩行 */
     .balance-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -48,22 +44,21 @@
       padding: 12px;
       text-align: center;
       margin-bottom: 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 4px rgba(30, 64, 175, 0.05);
     }
     .balance-title {
       font-size: 0.9rem;
-      color: #666;
-      display: block; /* 強制換行第一行 */
+      color: #64748b;
+      display: block;
       margin-bottom: 4px;
     }
     .balance-amount {
       font-size: 1.5rem;
       font-weight: bold;
       color: var(--primary-color);
-      display: block; /* 強制換行第二行 */
+      display: block;
     }
 
-    /* 表單區塊 */
     .form-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -78,17 +73,56 @@
       display: block;
       font-size: 0.85rem;
       font-weight: bold;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      color: var(--primary-color);
     }
     input, select {
       width: 100%;
       padding: 8px;
-      border: 1px solid #ccc;
+      border: 1px solid #cbd5e1;
       border-radius: 4px;
       box-sizing: border-box;
       font-size: 0.95rem;
     }
-    button {
+
+    /* 學員勾選區塊 */
+    .member-checkbox-container {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #cbd5e1;
+      padding: 8px;
+      border-radius: 4px;
+      background: #fafafa;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .member-item {
+      display: flex;
+      align-items: center;
+      background: #e0f2fe;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    .member-item input {
+      width: auto;
+      margin-right: 4px;
+    }
+
+    /* 管理學員區塊 */
+    .manage-members-btn {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0;
+      margin-top: 4px;
+    }
+
+    .btn-submit {
       width: 100%;
       background: var(--primary-color);
       color: white;
@@ -98,54 +132,93 @@
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
+      margin-top: 8px;
+    }
+    .btn-submit:hover {
+      background: var(--primary-hover);
     }
 
-    /* 帳目明細橫向滾動容器 */
     .table-container {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      overflow-x: auto; /* 確保橫向滑動 */
+      overflow-x: auto;
       white-space: nowrap;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 500px; /* 保證橫向排列不擠壓 */
+      min-width: 500px;
     }
     th, td {
       padding: 10px 12px;
       text-align: left;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #f1f5f9;
       font-size: 0.85rem;
     }
     th {
-      background: #f2ede4;
+      background: #dbeafe;
       color: var(--primary-color);
     }
-    .income { color: green; font-weight: bold; }
-    .expense { color: red; font-weight: bold; }
+    .income { color: #16a34a; font-weight: bold; }
+    .expense { color: #dc2626; font-weight: bold; }
+
+    /* Modal 彈窗 (學員名單管理) */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .member-manage-list {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0;
+    }
+    .member-manage-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .btn-del {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-  <!-- 頁面頭部（功夫圖案） -->
   <div class="header">
-    <span class="kungfu-icon">🥋</span>
-    <h1>武術會帳目管理</h1>
-    <span class="kungfu-icon">🥊</span>
+    <span>🥋</span>
+    <h1>深井武術養生班<br>收入支出報表</h1>
+    <span>🥊</span>
   </div>
 
-  <!-- 期初結餘（手機版面分成兩行） -->
+  <!-- 期初結餘（手機兩行版面） -->
   <div class="balance-card">
     <span class="balance-title">期初結餘</span>
-    <span class="balance-amount" id="currentBalance">HK$ 0.00</span>
+    <span class="balance-amount" id="currentBalance">HK$ 4,230.90</span>
   </div>
 
-  <!-- 新增紀錄表單 -->
   <div class="form-card">
     <form id="accountForm">
-      <!-- 類型改為「收入與支出」 -->
       <div class="form-group">
         <label>收入與支出</label>
         <select id="type" required>
@@ -154,9 +227,9 @@
         </select>
       </div>
 
-      <!-- 摘要/項目說明 (可選：考試費/橫額/贊助/其他) -->
+      <!-- 摘要 (已移除「項目說明」) -->
       <div class="form-group">
-        <label>摘要 / 項目說明</label>
+        <label>摘要</label>
         <select id="summary">
           <option value="考試費">考試費</option>
           <option value="橫額">橫額</option>
@@ -165,10 +238,13 @@
         </select>
       </div>
 
-      <!-- 學員真實姓名（連動既有名單） -->
+      <!-- 學員姓名勾選區 -->
       <div class="form-group">
-        <label>相關學員（真實姓名）</label>
-        <input type="text" id="memberNames" placeholder="請輸入學員全名（多位請用逗號隔開）" required>
+        <label>學員姓名</label>
+        <div class="member-checkbox-container" id="memberCheckboxArea">
+          <!-- 動態載入勾選框 -->
+        </div>
+        <button type="button" class="manage-members-btn" onclick="openMemberModal()">⚙️ 管理 / 新增學員名單</button>
       </div>
 
       <div class="form-group">
@@ -176,65 +252,102 @@
         <input type="number" id="amount" placeholder="0.00" step="0.1" required>
       </div>
 
-      <button type="submit">新增帳目紀錄</button>
+      <button type="submit" class="btn-submit">新增帳目紀錄</button>
     </form>
   </div>
 
-  <!-- 帳目明細（橫向排版、相關學員全部出現） -->
   <h2 style="font-size: 1.1rem; color: var(--primary-color);">帳目明細</h2>
   <div class="table-container">
     <table>
       <thead>
         <tr>
           <th>日期</th>
-          <th>收入/支出</th>
-          <th>摘要/項目說明</th>
-          <th>相關學員（全部）</th>
+          <th>收入與支出</th>
+          <th>摘要</th>
+          <th>學員姓名</th>
           <th>金額</th>
         </tr>
       </thead>
       <tbody id="recordTable">
-        <!-- 動態新增明細資料 -->
+        <!-- 紀錄會顯示在這裡 -->
       </tbody>
     </table>
   </div>
 
-  <script>
-    let records = [];
-    let balance = 0;
+  <!-- 學員管理彈窗 -->
+  <div class="modal" id="memberModal">
+    <div class="modal-content">
+      <h3>學員名單管理</h3>
+      <div style="display: flex; gap: 4px; margin-bottom: 10px;">
+        <input type="text" id="newMemberName" placeholder="輸入新學員姓名">
+        <button type="button" onclick="addMember()" style="width: 80px; background: var(--primary-color); color: white; border: none; border-radius: 4px;">增加</button>
+      </div>
+      <ul class="member-manage-list" id="memberManageList"></ul>
+      <button type="button" onclick="closeMemberModal()" class="btn-submit">關閉</button>
+    </div>
+  </div>
 
+  <script>
+    // 預設學員名單 (根據報表剔除英文名，陸生->陸景城，陸太->黎世瓊)
+    let memberList = [
+      "李鳳儀", "梁美玲", "蔡惠珠", "黃愛晴", "馮志民", "李文英", "鍾炳權", 
+      "鄭炳權", "關凱惠", "蘇少賢", "鍾麗君", "伍佩賢", "方兆賢", "張家莉", 
+      "周響輝", "林雪蓮", "譚美霞", "李翠玲", "陸焯然", "何肇東", "陳麗君", 
+      "楊燕娜", "區美珍", "蘇麗珠", "歐志雄", "盧明俐", "陸景城", "黎世瓊", "吳彩英"
+    ];
+
+    let records = [];
+    let balance = 4230.90; // 初始結餘
+
+    // 初始化載入
+    window.onload = function() {
+      renderMemberCheckboxes();
+      updateUI();
+    };
+
+    // 渲染勾選區
+    function renderMemberCheckboxes() {
+      const area = document.getElementById('memberCheckboxArea');
+      area.innerHTML = '';
+      memberList.forEach((name, index) => {
+        const div = document.createElement('div');
+        div.className = 'member-item';
+        div.innerHTML = `<label><input type="checkbox" value="${name}"> ${name}</label>`;
+        area.appendChild(div);
+      });
+    }
+
+    // 表單提交處理
     document.getElementById('accountForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
       const type = document.getElementById('type').value;
       const summary = document.getElementById('summary').value;
-      const memberNames = document.getElementById('memberNames').value.trim();
       const amount = parseFloat(document.getElementById('amount').value);
       const date = new Date().toLocaleDateString();
 
-      // 計算結餘
+      // 取得所有已勾選的學員
+      const checkedBoxes = document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]:checked');
+      const selectedMembers = Array.from(checkedBoxes).map(cb => cb.value).join('、');
+
       if (type === '收入') {
         balance += amount;
       } else {
         balance -= amount;
       }
 
-      // 新增資料
-      records.unshift({ date, type, summary, memberNames, amount });
+      records.unshift({ date, type, summary, memberNames: selectedMembers || '-', amount });
       
-      // 更新畫面
       updateUI();
       
-      // 清空輸入
+      // 重設表單與勾選
       document.getElementById('amount').value = '';
-      document.getElementById('memberNames').value = '';
+      document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]').forEach(cb => cb.checked = false);
     });
 
     function updateUI() {
-      // 更新期初/當前結餘
-      document.getElementById('currentBalance').textContent = `HK$ ${balance.toFixed(2)}`;
+      document.getElementById('currentBalance').textContent = `HK$ ${balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
 
-      // 更新表格明細
       const tbody = document.getElementById('recordTable');
       tbody.innerHTML = '';
       
@@ -249,6 +362,42 @@
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    /* 學員彈窗控制與增加/刪除 */
+    function openMemberModal() {
+      document.getElementById('memberModal').style.display = 'flex';
+      renderMemberManageList();
+    }
+
+    function closeMemberModal() {
+      document.getElementById('memberModal').style.display = 'none';
+      renderMemberCheckboxes();
+    }
+
+    function renderMemberManageList() {
+      const list = document.getElementById('memberManageList');
+      list.innerHTML = '';
+      memberList.forEach((name, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${name}</span> <button class="btn-del" onclick="deleteMember(${index})">刪除</button>`;
+        list.appendChild(li);
+      });
+    }
+
+    function addMember() {
+      const input = document.getElementById('newMemberName');
+      const name = input.value.trim();
+      if (name) {
+        memberList.push(name);
+        input.value = '';
+        renderMemberManageList();
+      }
+    }
+
+    function deleteMember(index) {
+      memberList.splice(index, 1);
+      renderMemberManageList();
     }
   </script>
 </body>
