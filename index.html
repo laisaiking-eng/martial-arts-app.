@@ -37,7 +37,6 @@
       text-align: center;
     }
 
-    /* 餘額卡片 (手機兩行) */
     .balance-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -140,12 +139,11 @@
       border: 1px solid var(--border-color);
       border-radius: 8px;
       overflow-x: auto;
-      white-space: nowrap;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 600px;
+      min-width: 550px;
     }
     th, td {
       padding: 10px 12px;
@@ -157,7 +155,16 @@
     th {
       background: #dbeafe;
       color: var(--primary-color);
+      white-space: nowrap;
     }
+    /* 讓學員姓名及附註欄位彈性多行 */
+    .col-details {
+      white-space: normal;
+      min-width: 180px;
+      max-width: 250px;
+      word-break: break-all;
+    }
+
     .income { color: #16a34a; font-weight: bold; }
     .expense { color: #dc2626; font-weight: bold; }
 
@@ -168,6 +175,7 @@
       background: rgba(0,0,0,0.5);
       justify-content: center;
       align-items: center;
+      z-index: 999;
     }
     .modal-content {
       background: white;
@@ -194,9 +202,10 @@
       background: #ef4444;
       color: white;
       border: none;
-      padding: 2px 8px;
+      padding: 4px 8px;
       border-radius: 4px;
       cursor: pointer;
+      font-size: 0.8rem;
     }
   </style>
 </head>
@@ -241,7 +250,7 @@
       <div class="form-group">
         <label>學員姓名</label>
         <div class="member-checkbox-container" id="memberCheckboxArea"></div>
-        <button type="button" class="manage-members-btn" onclick="openMemberModal()">⚙️ 管理 / 新增學員名單</button>
+        <button type="button" class="manage-members-btn" onclick="checkAuthAndRun(openMemberModal)">⚙️ 管理 / 新增學員名單</button>
       </div>
 
       <div class="form-group">
@@ -263,12 +272,14 @@
           <th>摘要</th>
           <th>學員姓名及附註</th>
           <th>金額</th>
+          <th>操作</th>
         </tr>
       </thead>
       <tbody id="recordTable"></tbody>
     </table>
   </div>
 
+  <!-- 學員管理彈窗 -->
   <div class="modal" id="memberModal">
     <div class="modal-content">
       <h3>學員名單管理</h3>
@@ -282,6 +293,9 @@
   </div>
 
   <script>
+    const CORRECT_PASSWORD = "class";
+    let isUnlocked = false; // 紀錄此 session 是否已解鎖
+
     let memberList = [
       "李鳳儀", "梁美玲", "蔡惠珠", "黃愛晴", "馮志民", "李文英", "鍾炳權", 
       "鄭炳權", "關凱惠", "蘇少賢", "鍾麗君", "伍佩賢", "方兆賢", "張家莉", 
@@ -297,6 +311,22 @@
       updateUI();
       toggleNoteField();
     };
+
+    // 密碼驗證核心函式
+    function checkAuthAndRun(callback) {
+      if (isUnlocked) {
+        callback();
+      } else {
+        const inputPwd = prompt("請輸入密碼解鎖權限（輸入及刪除資料）：");
+        if (inputPwd === CORRECT_PASSWORD) {
+          isUnlocked = true;
+          alert("解鎖成功！本次連線期間無需再次輸入密碼。");
+          callback();
+        } else if (inputPwd !== null) {
+          alert("密碼錯誤，無法進行操作。");
+        }
+      }
+    }
 
     function toggleNoteField() {
       const summary = document.getElementById('summary').value;
@@ -319,15 +349,18 @@
       });
     }
 
+    // 新增紀錄（需密碼）
     document.getElementById('accountForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      
+      checkAuthAndRun(submitFormProcess);
+    });
+
+    function submitFormProcess() {
       const type = document.getElementById('type').value;
       const summary = document.getElementById('summary').value;
       const amount = parseFloat(document.getElementById('amount').value);
       const note = document.getElementById('note').value.trim();
 
-      // 日期改為 日/月/年 (例如: 17/08/26)
       const now = new Date();
       const day = String(now.getDate()).padStart(2, '0');
       const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -344,6 +377,7 @@
       }
 
       records.unshift({ 
+        id: Date.now(),
         date: dateStr, 
         type, 
         summary, 
@@ -357,7 +391,25 @@
       document.getElementById('amount').value = '';
       document.getElementById('note').value = '';
       document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]').forEach(cb => cb.checked = false);
-    });
+    }
+
+    // 刪除帳目紀錄（需密碼）
+    function deleteRecord(id) {
+      checkAuthAndRun(() => {
+        const index = records.findIndex(r => r.id === id);
+        if (index !== -1) {
+          const item = records[index];
+          // 退回金額
+          if (item.type === '收入') {
+            balance -= item.amount;
+          } else {
+            balance += item.amount;
+          }
+          records.splice(index, 1);
+          updateUI();
+        }
+      });
+    }
 
     function updateUI() {
       document.getElementById('currentBalance').textContent = `HK$ ${balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
@@ -376,8 +428,9 @@
           <td>${r.date}</td>
           <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type}</td>
           <td>${r.summary}</td>
-          <td>${combinedText}</td>
+          <td class="col-details">${combinedText}</td>
           <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type === '收入' ? '+' : '-'}$${r.amount.toFixed(2)}</td>
+          <td><button class="btn-del" onclick="deleteRecord(${r.id})">刪除</button></td>
         `;
         tbody.appendChild(tr);
       });
