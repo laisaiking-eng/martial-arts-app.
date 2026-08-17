@@ -1,9 +1,489 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-    <title>My App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收支帳目管理系統</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        
+        /* 頂部結餘卡片 */
+        .summary-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .summary-item h3 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            opacity: 0.8;
+            font-weight: normal;
+        }
+        .summary-item div {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* 頁籤切換 */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            padding: 10px 25px;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            color: #2a5298;
+            border-bottom-color: #2a5298;
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 表單區域 */
+        .form-group-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 180px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        /* 學員勾選容器 */
+        .student-select-box {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            max-height: 120px;
+            overflow-y: auto;
+            background: #fafafa;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .student-checkbox-item {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .student-checkbox-item input {
+            width: auto;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        .btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background-color: #219150;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        /* 表格樣式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #fcfcfc;
+        }
+        .income {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .expense {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        /* 學員名冊列表 */
+        .student-list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .student-card {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
-    <h1>網站測試成功！</h1>
+
+<div class="container">
+    <h1>收支帳目管理系統</h1>
+
+    <!-- 頂部結餘資訊 -->
+    <div class="summary-card">
+        <div class="summary-item">
+            <h3>期初結餘</h3>
+            <div>$ <span id="initial-balance">3866.70</span></div>
+        </div>
+        <div class="summary-item">
+            <h3>總收入</h3>
+            <div>$ <span id="total-income">0.00</span></div>
+        </div>
+        <div class="summary-item">
+            <h3>總支出</h3>
+            <div>$ <span id="total-expense">0.00</span></div>
+        </div>
+        <div class="summary-item">
+            <h3>目前結餘</h3>
+            <div>$ <span id="current-balance">3866.70</span></div>
+        </div>
+    </div>
+
+    <!-- 頁籤切換 -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('ledger')">收支帳目（主版）</button>
+        <button class="tab-btn" onclick="switchTab('students')">學員名冊</button>
+    </div>
+
+    <!-- 收支帳目（主版） -->
+    <div id="tab-ledger" class="tab-content active">
+        <h3>新增收支記錄</h3>
+        <form id="transaction-form" onsubmit="addTransaction(event)">
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label for="trans-date">日期</label>
+                    <input type="date" id="trans-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="trans-type">類型</label>
+                    <select id="trans-type">
+                        <option value="income">收入 (+)</option>
+                        <option value="expense">支出 (-)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="trans-amount">金額 ($)</label>
+                    <input type="number" id="trans-amount" step="0.01" min="0" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="trans-category">摘要 / 項目說明</label>
+                    <input type="text" id="trans-category" placeholder="例：班費、材料費" required>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>選擇相關學員（可直接勾選）：</label>
+                <div class="student-select-box" id="student-checkbox-list">
+                    <!-- 自動由 JavaScript 動態生成學員勾選清單 -->
+                </div>
+            </div>
+
+            <button type="submit" class="btn">新增記錄</button>
+        </form>
+
+        <h3 style="margin-top: 30px;">帳目明細表</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>類型</th>
+                    <th>摘要/項目</th>
+                    <th>相關學員</th>
+                    <th>金額</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="transaction-tbody">
+                <!-- 帳目紀錄會顯示於此 -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 學員名冊 -->
+    <div id="tab-students" class="tab-content">
+        <h3>新增學員</h3>
+        <div class="form-group-row" style="align-items: flex-end;">
+            <div class="form-group" style="max-width: 300px;">
+                <label for="new-student-name">學員姓名</label>
+                <input type="text" id="new-student-name" placeholder="輸入學員姓名">
+            </div>
+            <button class="btn" onclick="addStudent()">新增學員</button>
+        </div>
+
+        <h3 style="margin-top: 30px;">現有學員名冊</h3>
+        <div class="student-list-container" id="student-list">
+            <!-- 學員卡片會顯示於此 -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // 預設資料設定：期初結餘 3866.70
+    const INITIAL_BALANCE = 3866.70;
+    
+    // 預設學員名冊（已移除 Doris 與 yeung Yeung）
+    let students = [
+        "陳大文", "張小明", "李美麗", "王小華", "趙子龍",
+        "孫悟空", "周杰倫", "林俊傑", "蔡依林", "鄧紫棋",
+        "陳奕迅", "張學友", "劉德華", "郭富城", "黎明",
+        "彭于晏", "許光漢", "桂綸鎂", "舒淇", "賈靜雯",
+        "張震", "梁朝偉", "劉嘉玲", "古天樂"
+    ];
+
+    let transactions = [];
+
+    // 初始化頁面
+    window.onload = function() {
+        document.getElementById('trans-date').valueAsDate = new Date();
+        renderStudents();
+        updateSummary();
+    };
+
+    // 切換頁籤
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        if (tabName === 'ledger') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('tab-ledger').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('tab-students').classList.add('active');
+        }
+    }
+
+    // 渲染學員資料（更新名冊及勾選框）
+    function renderStudents() {
+        // 渲染勾選清單
+        const checkboxContainer = document.getElementById('student-checkbox-list');
+        checkboxContainer.innerHTML = '';
+        
+        students.forEach((student) => {
+            const label = document.createElement('label');
+            label.className = 'student-checkbox-item';
+            label.innerHTML = `<input type="checkbox" value="${student}" class="student-checkbox"> ${student}`;
+            checkboxContainer.appendChild(label);
+        });
+
+        // 渲染學員名冊頁面
+        const listContainer = document.getElementById('student-list');
+        listContainer.innerHTML = '';
+        
+        students.forEach((student, index) => {
+            const card = document.createElement('div');
+            card.className = 'student-card';
+            card.innerHTML = `
+                <span>${student}</span>
+                <button class="btn btn-danger" onclick="deleteStudent(${index})">刪除</button>
+            `;
+            listContainer.appendChild(card);
+        });
+    }
+
+    // 新增學員
+    function addStudent() {
+        const input = document.getElementById('new-student-name');
+        const name = input.value.trim();
+        if (name) {
+            if (students.includes(name)) {
+                alert('該學員已存在！');
+                return;
+            }
+            students.push(name);
+            input.value = '';
+            renderStudents();
+        }
+    }
+
+    // 刪除學員
+    function deleteStudent(index) {
+        if (confirm(`確定要刪除學員「${students[index]}」嗎？`)) {
+            students.splice(index, 1);
+            renderStudents();
+        }
+    }
+
+    // 新增收支記錄
+    function addTransaction(e) {
+        e.preventDefault();
+
+        const date = document.getElementById('trans-date').value;
+        const type = document.getElementById('trans-type').value;
+        const amount = parseFloat(document.getElementById('trans-amount').value);
+        const category = document.getElementById('trans-category').value.trim();
+        
+        // 獲取勾選的學員
+        const selectedStudents = [];
+        document.querySelectorAll('.student-checkbox:checked').forEach(cb => {
+            selectedStudents.push(cb.value);
+        });
+
+        const newTrans = {
+            id: Date.now(),
+            date,
+            type,
+            amount,
+            category,
+            students: selectedStudents
+        };
+
+        transactions.push(newTrans);
+        
+        // 重置表單
+        document.getElementById('trans-amount').value = '';
+        document.getElementById('trans-category').value = '';
+        document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
+
+        renderTransactions();
+        updateSummary();
+    }
+
+    // 刪除紀錄
+    function deleteTransaction(id) {
+        transactions = transactions.filter(t => t.id !== id);
+        renderTransactions();
+        updateSummary();
+    }
+
+    // 渲染帳目表
+    function renderTransactions() {
+        const tbody = document.getElementById('transaction-tbody');
+        tbody.innerHTML = '';
+
+        // 按日期排序 (最新的在前面)
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        transactions.forEach(t => {
+            const tr = document.createElement('tr');
+            
+            const typeText = t.type === 'income' ? '<span class="income">收入</span>' : '<span class="expense">支出</span>';
+            const amountText = t.type === 'income' ? `+${t.amount.toFixed(2)}` : `-${t.amount.toFixed(2)}`;
+            const studentText = t.students.length > 0 ? t.students.join(', ') : '-';
+
+            tr.innerHTML = `
+                <td>${t.date}</td>
+                <td>${typeText}</td>
+                <td>${t.category}</td>
+                <td>${studentText}</td>
+                <td class="${t.type}">${amountText}</td>
+                <td><button class="btn btn-danger" onclick="deleteTransaction(${t.id})">刪除</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 更新頂部金額計算
+    function updateSummary() {
+        let totalIncome = 0;
+        let totalExpense = 0;
+
+        transactions.forEach(t => {
+            if (t.type === 'income') {
+                totalIncome += t.amount;
+            } else {
+                totalExpense += t.amount;
+            }
+        });
+
+        const currentBalance = INITIAL_BALANCE + totalIncome - totalExpense;
+
+        document.getElementById('total-income').innerText = totalIncome.toFixed(2);
+        document.getElementById('total-expense').innerText = totalExpense.toFixed(2);
+        document.getElementById('current-balance').innerText = currentBalance.toFixed(2);
+    }
+</script>
+
 </body>
 </html>
