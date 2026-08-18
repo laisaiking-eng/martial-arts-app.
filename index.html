@@ -134,6 +134,73 @@
       margin-top: 8px;
     }
 
+    /* 日期報告統計區塊 */
+    .report-card {
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .report-title {
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .date-filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-filter {
+      flex: 1;
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-reset {
+      background: #64748b;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .report-summary-box {
+      display: flex;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .report-summary-item {
+      flex: 1;
+    }
+    .report-summary-item span {
+      display: block;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .report-summary-item strong {
+      font-size: 0.95rem;
+    }
+
     .table-container {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -217,7 +284,7 @@
   </div>
 
   <div class="balance-card">
-    <span class="balance-title">餘額</span>
+    <span class="balance-title">累積總餘額</span>
     <span class="balance-amount" id="currentBalance">HK$ 0.00</span>
   </div>
 
@@ -259,6 +326,40 @@
 
       <button type="submit" class="btn-submit">新增帳目紀錄</button>
     </form>
+  </div>
+
+  <!-- 日期篩選與收支報告區塊 -->
+  <div class="report-card">
+    <div class="report-title">📊 自訂日期收支統計報告</div>
+    <div class="date-filter-grid">
+      <div>
+        <label style="font-size: 0.8rem; color: #475569; display: block; margin-bottom: 2px;">開始日期</label>
+        <input type="date" id="startDate">
+      </div>
+      <div>
+        <label style="font-size: 0.8rem; color: #475569; display: block; margin-bottom: 2px;">結束日期</label>
+        <input type="date" id="endDate">
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn-filter" onclick="applyDateFilter()">套用篩選</button>
+      <button class="btn-reset" onclick="resetDateFilter()">重設 / 顯示全部</button>
+    </div>
+
+    <div class="report-summary-box">
+      <div class="report-summary-item">
+        <span>期間收入</span>
+        <strong class="income" id="filterIncome">HK$ 0.00</strong>
+      </div>
+      <div class="report-summary-item">
+        <span>期間支出</span>
+        <strong class="expense" id="filterExpense">HK$ 0.00</strong>
+      </div>
+      <div class="report-summary-item">
+        <span>期間結餘</span>
+        <strong style="color: var(--primary-color)" id="filterBalance">HK$ 0.00</strong>
+      </div>
+    </div>
   </div>
 
   <h2 style="font-size: 1.1rem; color: var(--primary-color);">帳目明細</h2>
@@ -316,6 +417,7 @@
 
     const CORRECT_PASSWORD = "class";
     let isUnlocked = false;
+    let allRecords = []; // 儲存所有紀錄備用
     let memberList = [
       "李鳳儀", "梁美玲", "蔡惠珠", "黃愛晴", "馮志民", "李文英", "鍾炳權", 
       "鄭炳權", "關凱惠", "蘇少賢", "鍾麗君", "伍佩賢", "方兆賢", "張家莉", 
@@ -360,44 +462,90 @@
       // 監聽帳目明細（實時同步）
       onSnapshot(collection(db, "records"), (snapshot) => {
         let totalBalance = 0;
-        const tbody = document.getElementById('recordTable');
-        tbody.innerHTML = '';
+        allRecords = [];
 
-        let docsArray = [];
         snapshot.forEach(docItem => {
-          docsArray.push({ id: docItem.id, ...docItem.data() });
+          allRecords.push({ id: docItem.id, ...docItem.data() });
         });
 
-        // 按日期降序排列
-        docsArray.sort((a, b) => b.createdAt - a.createdAt);
+        // 按建立時間降序排列
+        allRecords.sort((a, b) => b.createdAt - a.createdAt);
 
-        docsArray.forEach(r => {
-          if (r.type === '收入') {
-            totalBalance += r.amount;
-          } else {
-            totalBalance -= r.amount;
-          }
-
-          let details = [];
-          if (r.memberNames) details.push(`<b>學員：</b>${r.memberNames}`);
-          if (r.note) details.push(`<b>附註：</b><br>${r.note.replace(/\n/g, '<br>')}`);
-          const combinedText = details.length > 0 ? details.join('<br>') : '-';
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${r.date}</td>
-            <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type}</td>
-            <td>${r.summary}</td>
-            <td class="col-details">${combinedText}</td>
-            <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type === '收入' ? '+' : '-'}$${r.amount.toFixed(2)}</td>
-            <td><button class="btn-del" onclick="deleteRecord('${r.id}')">刪除</button></td>
-          `;
-          tbody.appendChild(tr);
+        // 計算累積總餘額
+        allRecords.forEach(r => {
+          if (r.type === '收入') totalBalance += r.amount;
+          else totalBalance -= r.amount;
         });
 
         document.getElementById('currentBalance').textContent = `HK$ ${totalBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        
+        // 渲染列表與更新篩選結果
+        applyDateFilter();
       });
     }
+
+    // 渲染資料表格與統計金額
+    function renderRecords(recordsToRender) {
+      const tbody = document.getElementById('recordTable');
+      tbody.innerHTML = '';
+
+      let filterIncome = 0;
+      let filterExpense = 0;
+
+      recordsToRender.forEach(r => {
+        if (r.type === '收入') filterIncome += r.amount;
+        else filterExpense += r.amount;
+
+        let details = [];
+        if (r.memberNames) details.push(`<b>學員：</b>${r.memberNames}`);
+        if (r.note) details.push(`<b>附註：</b><br>${r.note.replace(/\n/g, '<br>')}`);
+        const combinedText = details.length > 0 ? details.join('<br>') : '-';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.date}</td>
+          <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type}</td>
+          <td>${r.summary}</td>
+          <td class="col-details">${combinedText}</td>
+          <td class="${r.type === '收入' ? 'income' : 'expense'}">${r.type === '收入' ? '+' : '-'}$${r.amount.toFixed(2)}</td>
+          <td><button class="btn-del" onclick="deleteRecord('${r.id}')">刪除</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 更新報告卡片數字
+      document.getElementById('filterIncome').textContent = `HK$ ${filterIncome.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+      document.getElementById('filterExpense').textContent = `HK$ ${filterExpense.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+      const filterBal = filterIncome - filterExpense;
+      document.getElementById('filterBalance').textContent = `HK$ ${filterBal.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+    }
+
+    // 套用日期篩選
+    window.applyDateFilter = function() {
+      const startVal = document.getElementById('startDate').value;
+      const endVal = document.getElementById('endDate').value;
+
+      if (!startVal && !endVal) {
+        renderRecords(allRecords);
+        return;
+      }
+
+      const filtered = allRecords.filter(r => {
+        if (!r.isoDate) return true; // 相容舊資料
+        if (startVal && r.isoDate < startVal) return false;
+        if (endVal && r.isoDate > endVal) return false;
+        return true;
+      });
+
+      renderRecords(filtered);
+    };
+
+    // 重設日期篩選
+    window.resetDateFilter = function() {
+      document.getElementById('startDate').value = '';
+      document.getElementById('endDate').value = '';
+      renderRecords(allRecords);
+    };
 
     function renderMemberCheckboxes() {
       const area = document.getElementById('memberCheckboxArea');
@@ -420,16 +568,20 @@
         const note = document.getElementById('note').value.trim();
 
         const now = new Date();
-        const day = String(now.getDate()).padStart(2, '0');
+        const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
-        const yearShort = String(now.getFullYear()).slice(-2);
+        const day = String(now.getDate()).padStart(2, '0');
+        const yearShort = String(year).slice(-2);
+
         const dateStr = `${day}/${month}/${yearShort}`;
+        const isoDate = `${year}-${month}-${day}`; // 用於精確日期比較
 
         const checkedBoxes = document.querySelectorAll('#memberCheckboxArea input[type="checkbox"]:checked');
         const selectedMembers = Array.from(checkedBoxes).map(cb => cb.value).join('、');
 
         await addDoc(collection(db, "records"), {
           date: dateStr,
+          isoDate: isoDate,
           type,
           summary,
           memberNames: selectedMembers,
